@@ -1,5 +1,12 @@
-# Data simulation functions (Shah et al. 2017)
-CorrMatrixNegFixed <- function(blocks, a, corr, off) {
+#### Uncovering the Consequences of BEAMs in Omics Data Analysis ####
+# Author: Harvard Wai Hann Hui
+# Date: 09/February/2023
+# Script: Functions
+
+##################################################################
+####### Create correlation matrix (Shah et al. 2017) 
+##################################################################
+CorrMatrixNegFixed <- function(blocks, a, corr, off){
   Corr <- NULL
   for (i in 1:blocks) {
     Corr[[i]] <- matrix(NA, ncol = a, nrow = a)
@@ -26,7 +33,14 @@ CorrMatrixNegFixed <- function(blocks, a, corr, off) {
   return(res)
 }
 
-SimulatedData <- function(n, p, covar, low, high)  {
+
+##################################################################
+####### Create dataframe from corr. matrix (Shah et al. 2017)
+# n = no. of samples
+# p = no. of features
+# covar = correlation matrix
+##################################################################
+SimulatedData <- function(n, p, covar, low, high){
   ## No of Samples == N
   ## No of Features = p
   Means <- runif(p, min = low, max = high)
@@ -34,9 +48,11 @@ SimulatedData <- function(n, p, covar, low, high)  {
   return(data)
 }
 
-##### Class effect simulation for the first 60 rows
-class_effect <- function(df, class_factor, halfway=TRUE)
-{
+
+##################################################################
+####### Class effect simulation (Affects the first 60 rows)
+##################################################################
+class_effect <- function(df, class_factor, halfway=TRUE){
   if(halfway==TRUE)
   {
     df[1:60,c(which(class_factor==0))]=df[1:60,c(which(class_factor==0))]*1.5
@@ -46,9 +62,13 @@ class_effect <- function(df, class_factor, halfway=TRUE)
   return(df)
 }
 
-##### Batch effect simulation (Affects the first 10 columns)
-batch_effect<-function(df, Z, Y, multiplicative=FALSE, additive=FALSE)
-{
+
+##################################################################
+####### Batch effect simulation (Affects the first 10 columns)
+# Z = multiplicative factor
+# Y = additive factor
+##################################################################
+batch_effect<-function(df, Z, Y, multiplicative=FALSE, additive=FALSE){
   if(multiplicative==TRUE && additive==FALSE){
     batch_df <- cbind(df[,1:10]*Z, df[,11:20])#create batch effect(first 10 cols vs last 10 cols)
   } else if (multiplicative==FALSE && additive==TRUE){
@@ -62,7 +82,12 @@ batch_effect<-function(df, Z, Y, multiplicative=FALSE, additive=FALSE)
   
 }
 
-# Simulate MV function
+
+##################################################################
+####### Simulation of Missing values
+# total = total MV proportion
+# mcar = MCAR MVs proportion
+##################################################################
 mv.sim<-function(df,total,mcar){
   df2<-2^df
   subdfhole=c()
@@ -105,7 +130,11 @@ mv.sim<-function(df,total,mcar){
   return(list(df2,subdfhole))
 }
 
-impute.M1 <- function (df, mv.threshold = 0.8){
+
+##################################################################
+####### M1 imputation by KNN
+##################################################################
+impute.M1 <- function (df, k, mv.threshold = 0.8){
   rownames(df) <- seq(nrow(df))
   drop_inds=c()
   for (i in 1:nrow(df)){
@@ -120,14 +149,18 @@ impute.M1 <- function (df, mv.threshold = 0.8){
   }
   
   # impute by KNN
-  imp_df <- impute.knn(df2, k=3, colmax=0.99, rowmax=0.99)
+  imp_df <- impute.knn(df2, k=k, colmax=0.99, rowmax=0.99)
   out_df <- imp_df$data
   
   rownames(out_df) <- rownames(df2)
   return(out_df)
 }
 
-impute.M2 <- function (df, batch_factor, mv.threshold = 0.8){
+
+##################################################################
+####### M2 imputation by KNN
+##################################################################
+impute.M2 <- function (df, k, batch_factor, mv.threshold = 0.8){
   rownames(df) <- seq(nrow(df))
   batches <- unique(batch_factor)
   batch_list <- list()
@@ -157,7 +190,7 @@ impute.M2 <- function (df, batch_factor, mv.threshold = 0.8){
   
   out_df<-c()
   for (j in 1:length(batches)){
-    cur_imp_batch <- impute.knn(batch_list[[j]], k=3, colmax=0.99, rowmax=0.99)
+    cur_imp_batch <- impute.knn(batch_list[[j]], k=k, colmax=0.99, rowmax=0.99)
     cur_imp_batch <- cur_imp_batch$data
     out_df <- cbind(out_df, cur_imp_batch)
   }
@@ -165,7 +198,12 @@ impute.M2 <- function (df, batch_factor, mv.threshold = 0.8){
   rownames(out_df) <- rownames(df2)
   return(out_df)
 }
-  
+
+
+##################################################################
+####### Batch effect correction by ComBat
+# pdat should include class and batch factors
+##################################################################
 do.combat.sim <- function(df, pdat){
   df = as.data.frame(df)
   batch <- pdat$batch
@@ -177,7 +215,13 @@ do.combat.sim <- function(df, pdat){
   
   return(combat_edata)
 }
-  
+
+
+##################################################################
+####### Perform t-test based on class factor
+# output either "features" for significant features or "pvals"
+# for p-values of all features
+##################################################################
 t.test.sim <- function(df, class_factor, output="features"){
   class1 = df[,which(class_factor==0)]
   class2 = df[,which(class_factor==1)]
@@ -205,6 +249,12 @@ t.test.sim <- function(df, class_factor, output="features"){
     }
 }
 
+
+##################################################################
+####### Reduce dataframe to same features
+# if both == FALSE, only df1 is reduced to df2's feature space
+# if both == TRUE, both df1 and df2 are reduced to same space
+##################################################################
 same.features <- function(df1, df2, both = FALSE){ # df1 = data to be reduced, df2 = reference
   df1.features = rownames(df1)
   df2.features = rownames(df2)
@@ -221,8 +271,13 @@ same.features <- function(df1, df2, both = FALSE){ # df1 = data to be reduced, d
   if (both == FALSE){
     return(out_df1)
   }
-} # [[1]] if only df1 is reduced, [[2]] also if df2 is reduced
+}
 
+
+##################################################################
+####### Get TPR/FPR values of imputed data
+# true and false cases are determined using the supplied true dataset
+##################################################################
 tprfpr <- function(true, imp, class_factor, output="tpr"){
   tps <- t.test.sim(true, class_factor, output="features")
   imp.true.features <- tps[which(tps %in% rownames(imp))]
@@ -248,6 +303,10 @@ tprfpr <- function(true, imp, class_factor, output="tpr"){
   }
 }
 
+
+##################################################################
+####### Check if results are significantly different
+##################################################################
 check.p <- function(res_df){
   output=c()
   iter=seq(from=1,to=ncol(res_df), by=2)
@@ -257,47 +316,4 @@ check.p <- function(res_df){
     output = c(output, t$p.val)
   }
   return(output)
-}
-
-
-# KNN optimization
-do.knn<-function(df, k){
-  imp.knn <- df
-  imp.knn[is.finite(df) == FALSE] <- NA
-  mv_ind<-which(is.na(df), arr.ind = TRUE)
-  mv_rows<-unique(mv_ind[,1])
-  
-  klist<-list()
-  
-  for (i in mv_rows){
-    klist[[i]]<-list()
-    feature_mvs<-which(is.na(df[i,]))
-    feature_obs<-which(!is.na(df[i,]))
-    cand_vectors<-df[,feature_obs]
-    for (j in 1:length(feature_mvs)){
-      feature_mvs_ind<-feature_mvs[j]
-      target_vector<-df[,feature_mvs_ind]
-      
-      if (length(feature_obs) < k){
-        imp.knn[i,feature_mvs_ind]<-mean(df[,feature_mvs_ind], na.rm = TRUE)
-      } else {
-        calc.dist<-data.frame((cand_vectors-target_vector)^2)
-        dist<-sqrt(colMeans(calc.dist, na.rm = TRUE))
-        dist[is.nan(dist) | is.na(dist)] <- Inf
-        dist[dist==0] <- ifelse(is.finite(min(dist[dist>0])), min(dist[dist>0])/2, 1)
-        
-        if (sum(is.finite(dist)) < k) {
-          #stop(message = "Fewer than K finite distances found")
-          imp.knn[i,feature_mvs_ind]<-mean(df[,feature_mvs_ind], na.rm = TRUE)
-        } else {
-          k_sample_ind <- order(dist)[1:k]
-          k_samples <- feature_obs[k_sample_ind]
-          wghts <- 1/dist[k_sample_ind]/sum(1/dist[k_sample_ind])
-          imp.knn[i, feature_mvs_ind] <- wghts %*% df[i, k_samples]
-        }
-      }
-      klist[[i]][[feature_mvs_ind]]<-k_samples
-    }
-  }
-  return(list(original_data=df, imputed_data=imp.knn, klist=klist))
 }
