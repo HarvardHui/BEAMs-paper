@@ -41,8 +41,6 @@ CorrMatrixNegFixed <- function(blocks, a, corr, off){
 # covar = correlation matrix
 ##################################################################
 SimulatedData <- function(n, p, covar, low, high){
-  ## No of Samples == N
-  ## No of Features = p
   Means <- runif(p, min = low, max = high)
   data <- rmvnorm(n, mean = Means, sigma = covar)
   return(data)
@@ -72,7 +70,7 @@ batch_effect<-function(df, Z, Y, multiplicative=FALSE, additive=FALSE){
   if(multiplicative==TRUE && additive==FALSE){
     batch_df <- cbind(df[,1:10]*Z, df[,11:20])#create batch effect(first 10 cols vs last 10 cols)
   } else if (multiplicative==FALSE && additive==TRUE){
-    batch_df <- cbind(df[,1:10]+Y, df[,11:20])#Maybe we can calculate global average, take the square root and then add
+    batch_df <- cbind(df[,1:10]+Y, df[,11:20])
   } else if (multiplicative==TRUE && additive==TRUE){
     batch_df <- cbind(Z*(df[,1:10]+Y), df[,11:20])#z(x+Y), where y is the additive factor, and z is the multiplicative factor.
   } else{
