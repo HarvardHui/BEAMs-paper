@@ -4,7 +4,7 @@
 # Script: Functions
 
 ##################################################################
-####### Create correlation matrix (Shah et al. 2017) 
+####### Create correlation matrix (Shah et al. 2017, reference no. 33 in manuscript) 
 ##################################################################
 CorrMatrixNegFixed <- function(blocks, a, corr, off){
   Corr <- NULL
@@ -35,7 +35,7 @@ CorrMatrixNegFixed <- function(blocks, a, corr, off){
 
 
 ##################################################################
-####### Create dataframe from corr. matrix (Shah et al. 2017)
+####### Create dataframe from corr. matrix (Shah et al. 2017, reference no. 33 in manuscript)
 # n = no. of samples
 # p = no. of features
 # covar = correlation matrix
